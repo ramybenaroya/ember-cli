@@ -88,29 +88,34 @@ function createTestTargets(projectName, options) {
   // Fresh install
   if (!downloaded('node_modules') && !downloaded('bower_components')) {
     command = function() {
-      return applyCommand(options.command, projectName);
+      return applyCommand(options.command, projectName, '--no-optional');
     };
     // bower_components but no node_modules
   } else if (!downloaded('node_modules') && downloaded('bower_components')) {
     command = function() {
-      return applyCommand(options.command, projectName, '--skip-bower');
+      return applyCommand(options.command, projectName, '--skip-bower', '--no-optional');
     };
     // node_modules but no bower_components
   } else if (!downloaded('bower_components') && downloaded('node_modules')) {
     command = function() {
-      return applyCommand(options.command, projectName, '--skip-npm');
+      return applyCommand(options.command, projectName, '--skip-npm', '--no-optional');
     };
   } else {
     // Everything is already there
     command = function() {
-      return applyCommand(options.command, projectName, '--skip-npm', '--skip-bower');
+      return applyCommand(options.command, projectName, '--skip-npm', '--skip-bower', '--no-optional');
     };
   }
 
   return createTmp(function() {
-    return command();
-  }).catch(handleResult).finally(function () {
-  });
+    return command().
+      then(function(value) {
+        return runCommand('npm', 'install', '--no-optional', 'ember-disable-prototype-extensions').
+          then(function(){
+            return value;
+          });
+    });
+  }).catch(handleResult);
 }
 
 /**
